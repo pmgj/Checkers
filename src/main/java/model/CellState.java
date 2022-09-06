@@ -1,0 +1,5 @@
+package model;
+
+public enum CellState {
+    EMPTY, MEN_PLAYER1, MEN_PLAYER2, KING_PLAYER1, KING_PLAYER2, PLAYER1, PLAYER2
+}
