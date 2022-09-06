@@ -1,36 +1,45 @@
 package controller;
 
-import model.CellState;
+import java.util.List;
+
+import model.Cell;
+import model.Checkers;
 import model.Player;
-import model.Winner;
 
 public class Message {
     private ConnectionType type;
+    private Checkers game;
     private Player turn;
-    private CellState[][] board;
-    private Winner winner;
+    private List<List<Cell>> possibleMoves;
+    private Cell beginCell;
+    private Cell endCell;
 
     public Message() {
-        
+
     }
-    
+
     public Message(ConnectionType type, Player turn) {
         this.type = type;
         this.turn = turn;
     }
 
-    public Message(ConnectionType type, Player turn, CellState[][] board) {
+    public Message(ConnectionType type, Checkers game) {
         this.type = type;
-        this.turn = turn;
-        this.board = board;
+        this.game = game;
     }
 
-    public Message(ConnectionType type, Winner win, CellState[][] board) {
+    public Message(ConnectionType type, List<List<Cell>> possibleMoves) {
         this.type = type;
-        this.winner = win;
-        this.board = board;
+        this.possibleMoves = possibleMoves;
     }
-    
+
+    public Message(ConnectionType type, Checkers game, Cell beginCell, Cell endCell) {
+        this.type = type;
+        this.game = game;
+        this.beginCell = beginCell;
+        this.endCell = endCell;
+    }
+
     public ConnectionType getType() {
         return type;
     }
@@ -47,19 +56,35 @@ public class Message {
         this.turn = turn;
     }
 
-    public CellState[][] getBoard() {
-        return board;
+    public Cell getBeginCell() {
+        return beginCell;
     }
 
-    public void setBoard(CellState[][] board) {
-        this.board = board;
+    public void setBeginCell(Cell beginCell) {
+        this.beginCell = beginCell;
     }
 
-    public Winner getWinner() {
-        return winner;
+    public Cell getEndCell() {
+        return endCell;
     }
 
-    public void setWinner(Winner winner) {
-        this.winner = winner;
+    public void setEndCell(Cell endCell) {
+        this.endCell = endCell;
+    }
+
+    public Checkers getGame() {
+        return game;
+    }
+
+    public void setGame(Checkers game) {
+        this.game = game;
+    }
+
+    public void setPossibleMoves(List<List<Cell>> possibleMoves) {
+        this.possibleMoves = possibleMoves;
+    }
+
+    public List<List<Cell>> getPossibleMoves() {
+        return possibleMoves;
     }
 }

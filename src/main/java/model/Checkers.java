@@ -11,12 +11,14 @@ import model.moves.Moves;
 
 public abstract class Checkers {
 
-    protected Player turn;
+    protected Player turn = Player.PLAYER1;
     protected CellState[][] board;
     protected Moves menMove;
     protected Moves kingMove;
     protected Moves menCapture;
     protected Moves kingCapture;
+    private Winner winner = Winner.NONE;
+    private List<Cell> positions;
 
     public Player getTurn() {
         return turn;
@@ -24,6 +26,14 @@ public abstract class Checkers {
 
     public CellState[][] getBoard() {
         return board;
+    }
+
+    public Winner getWinner() {
+        return winner;
+    }
+
+    public List<Cell> getPositions() {
+        return positions;
     }
 
     public CellState getPiece(Cell cell) {
@@ -86,7 +96,10 @@ public abstract class Checkers {
         return (inLimit.apply(cell.getX(), board.length) && inLimit.apply(cell.getY(), board[0].length));
     }
 
-    public Winner move(Player player, Cell beginCell, Cell endCell) throws Exception {
+    public void move(Player player, Cell beginCell, Cell endCell) throws Exception {
+        if (this.winner != Winner.NONE) {
+            throw new Exception("This game is already finished.");
+        }
         int or = beginCell.getX(), oc = beginCell.getY(), dr = endCell.getX(), dc = endCell.getY();
         /* É a sua vez de jogar? */
         if (player != turn) {
@@ -114,11 +127,11 @@ public abstract class Checkers {
             throw new Exception("This move is invalid.");
         }
         CellState currentPiece = getPiece(beginCell);
-        List<Cell> positions = moves.stream()
+        this.positions = moves.stream()
                 .filter(z -> z.get(0).equals(beginCell) && z.get(z.size() - 1).equals(endCell)).findFirst()
                 .orElse(new ArrayList<>());
         int a = or, b = oc;
-        for (Cell e : positions) {
+        for (Cell e : this.positions) {
             int x = e.getX(), y = e.getY();
             board[x][y] = board[a][b];
             int rdiff = x > a ? 1 : -1, cdiff = y > b ? 1 : -1;
@@ -136,7 +149,7 @@ public abstract class Checkers {
         }
         turn = (turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         /* Verificar fim de jogo */
-        return endOfGame();
+        this.winner = endOfGame();
     }
 
     private Winner endOfGame() {
@@ -162,7 +175,7 @@ public abstract class Checkers {
         return Winner.NONE;
     }
 
-    private List<List<Cell>> showPossibleMoves(Cell cell) {
+    public List<List<Cell>> showPossibleMoves(Cell cell) {
         int row = cell.getX(), col = cell.getY();
         List<List<Cell>> moves = new ArrayList<>();
         switch (board[row][col]) {
@@ -190,18 +203,7 @@ public abstract class Checkers {
         return moves;
     }
 
-    public CellState[][] rotateBoard() {
-        int rows = board.length, cols = board[0].length;
-        CellState[][] transMatrix = new CellState[rows][cols];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                transMatrix[i][j] = board[rows - i - 1][cols - j - 1];
-            }
-        }
-        return transMatrix;
-    }
-
-/*     private void printBoard() {
+    public void printBoard() {
         for (int i = 0; i <= board.length * 4; i++) {
             System.out.print("-");
         }
@@ -237,5 +239,4 @@ public abstract class Checkers {
             System.out.println("");
         }
     }
- */
 }
