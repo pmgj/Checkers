@@ -60,8 +60,8 @@ public class Endpoint {
                 return;
             }
             game.move(session == s1 ? Player.PLAYER1 : Player.PLAYER2, beginCell, endCell);
-            s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
-            s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }

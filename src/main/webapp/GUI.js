@@ -91,7 +91,7 @@ class GUI {
         this.setButtonText(true);
         this.writeResponse(`Game Over! ${(winner === "DRAW") ? "Draw!" : (winner === this.player ? "You win!" : "You lose!")}`);
     }
-    onMessage(evt) {
+    async onMessage(evt) {
         let data = JSON.parse(evt.data);
         console.log(data);
         let game = data.game;
@@ -109,29 +109,39 @@ class GUI {
                 break;
             case "MOVE_PIECE":
                 const time = 1000;
-                let moveImage = (destinationCell, piece) => {
-                    destinationCell.innerHTML = "";
-                    destinationCell.appendChild(piece);
-                };
-                let animatePiece = (startPosition, endPosition) => {
-                    let startCell = this.getCorrectCell(startPosition);
-                    let endCell = this.getCorrectCell(endPosition);
-                    let bTD = this.getTableData(startCell);
-                    let eTD = this.getTableData(endCell);
-                    let piece = bTD.firstChild;
-                    let { x: a, y: b } = startCell;
-                    let { x: c, y: d } = endCell;
-                    let td = document.querySelector("td");
-                    let size = td.offsetWidth;
-                    let anim = piece.animate([{ top: 0, left: 0 }, { top: `${(c - a) * size}px`, left: `${(d - b) * size}px` }], time);
-                    anim.onfinish = () => moveImage(eTD, piece);
-                };
-                animatePiece(data.beginCell, data.endCell);
-                let endCell = this.getCorrectCell(data.endCell);
-                let eTD = this.getTableData(endCell);
-                let opponentImage = eTD.firstChild;
-                if (opponentImage) {
-                    opponentImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                let positions = game.positions;
+                for (let i = 1; i < positions.length; i++) {
+                    let { x: or, y: oc } = this.getCorrectCell(positions[i - 1]);
+                    let { x: dr, y: dc } = this.getCorrectCell(positions[i]);
+                    await new Promise(resolve => {
+                        if (Math.abs(or - dr) >= 2) {
+                            let rdiff = dr > or ? 1 : -1, cdiff = dc > oc ? 1 : -1;
+                            for (let i = 1; i < Math.abs(dr - or); i++) {
+                                let middleImage = document.querySelector(`tr:nth-child(${or + rdiff * i + 1}) td:nth-child(${oc + cdiff * i + 1}) img`);
+                                if (middleImage) {
+                                    let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                                    anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
+                                }
+                            }
+                        }
+                        let image = document.querySelector(`tr:nth-child(${or + 1}) td:nth-child(${oc + 1}) img`);
+                        let moveImage = () => {
+                            let temp = this.getCorrectCell(positions[i]);
+                            this.getTableData(temp).appendChild(image);
+                            resolve(true);
+                        };
+                        let td = document.querySelector("td");
+                        let size = td.offsetWidth;
+                        let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
+                        anim.onfinish = moveImage;
+                    });
+                }
+                let end = positions[positions.length - 1];
+                let { x, y } = this.getCorrectCell(end);
+                let table = document.querySelector("table");
+                let td = table.rows[x].cells[y];
+                if (game.board[end.x][end.y] === "KING_PLAYER1" || game.board[end.x][end.y] === "KING_PLAYER2") {
+                    td.innerHTML = `<img src="images/${game.board[end.x][end.y]}.svg" alt="" />`;
                 }
                 if (game.winner === "NONE") {
                     this.writeResponse(this.player === game.turn ? `It's your turn.` : `Wait for your turn.`);

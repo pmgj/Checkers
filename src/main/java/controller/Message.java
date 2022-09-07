@@ -11,8 +11,6 @@ public class Message {
     private Checkers game;
     private Player turn;
     private List<List<Cell>> possibleMoves;
-    private Cell beginCell;
-    private Cell endCell;
 
     public Message() {
 
@@ -33,13 +31,6 @@ public class Message {
         this.possibleMoves = possibleMoves;
     }
 
-    public Message(ConnectionType type, Checkers game, Cell beginCell, Cell endCell) {
-        this.type = type;
-        this.game = game;
-        this.beginCell = beginCell;
-        this.endCell = endCell;
-    }
-
     public ConnectionType getType() {
         return type;
     }
@@ -54,22 +45,6 @@ public class Message {
 
     public void setTurn(Player turn) {
         this.turn = turn;
-    }
-
-    public Cell getBeginCell() {
-        return beginCell;
-    }
-
-    public void setBeginCell(Cell beginCell) {
-        this.beginCell = beginCell;
-    }
-
-    public Cell getEndCell() {
-        return endCell;
-    }
-
-    public void setEndCell(Cell endCell) {
-        this.endCell = endCell;
     }
 
     public Checkers getGame() {
