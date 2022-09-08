@@ -32,6 +32,7 @@ export default class Checkers {
     }
     move(beginCell, endCell) {
         let { x: or, y: oc } = beginCell;
+        let { x: dr, y: dc } = endCell;
         if (!beginCell || !endCell) {
             throw new Error("The value of one of the cells does not exist.");
         }
@@ -65,6 +66,11 @@ export default class Checkers {
             }
             a = x, b = y;
         });
+        if (currentPiece === State.PLAYER1 && dr === 0) {
+            this.board[dr][dc] = new CellState(State.PLAYER1, Piece.KING);
+        } else if (currentPiece === State.PLAYER2 && dr === this.rows - 1) {
+            this.board[dr][dc] = new CellState(State.PLAYER2, Piece.KING);
+        }
         this.turn = this.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
     }
     getState({ x, y }) {
@@ -76,7 +82,7 @@ export default class Checkers {
     }
     possibleMoves(cell) {
         let { x: row, y: col } = cell;
-        let captureMove = ({x: crow, y: ccol}, visitedCells = []) => {
+        let captureMove = ({ x: crow, y: ccol }, visitedCells = []) => {
             let adversaryPlayer = this.turn === Player.PLAYER1 ? State.PLAYER2 : State.PLAYER1;
             let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], coords = [];
             for (let [diffRow, diffCol] of pos) {
@@ -98,9 +104,74 @@ export default class Checkers {
             let max = Math.max(...poss.map(p => p.length));
             return poss.filter(p => p.length === max);
         };
-        let normalMove = ({x, y}) => {
+        let normalMove = ({ x, y }) => {
             let diags = this.turn === Player.PLAYER1 ? [new Cell(x - 1, y - 1), new Cell(x - 1, y + 1)] : [new Cell(x + 1, y - 1), new Cell(x + 1, y + 1)];
             return diags.map(pos => (this.onBoard(pos) && this.getState(pos) === State.EMPTY) ? [pos] : null).filter(v => v);
+        };
+        let captureMoveKing = (currentCell, visitedCells = []) => {
+            let adversaryPlayer = (this.turn === Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
+            let { x: crow, y: ccol } = currentCell;
+            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], coords = [], destinationCell;
+            for (let [diffRow, diffCol] of pos) {
+                let i = 1;
+                let adv = false;
+                do {
+                    destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
+                    if (!this.onBoard(destinationCell) || visitedCells.find(c => c.equals(destinationCell))) {
+                        break;
+                    } else if (this.getState(destinationCell) === adversaryPlayer) {
+                        adv = true;
+                        break;
+                    } else if (this.getState(destinationCell) === State.EMPTY) {
+                        i++;
+                    } else {
+                        break;
+                    }
+                } while (true);
+                if (adv) {
+                    visitedCells.push(destinationCell);
+                    let cells = [];
+                    i++;
+                    do {
+                        destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
+                        if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY) {
+                            cells.push(destinationCell);
+                            i++;
+                        } else {
+                            break;
+                        }
+                    } while (true);
+                    if (cells.length > 0) {
+                        cells.forEach(c => {
+                            let moves = captureMoveKing(c, visitedCells);
+                            if (moves.length === 0) {
+                                coords.push(c);
+                            } else {
+                                moves.forEach(v => v.push(c));
+                                coords.push(moves);
+                            }
+                        });
+                    }
+                    visitedCells.pop();
+                }
+            }
+            let poss = coords.flat().map(p => p instanceof Cell ? [p] : p);
+            let max = Math.max(...poss.map(p => p.length));
+            return poss.filter(p => p.length === max);
+        };
+        let normalMoveKing = ({ x: crow, y: ccol }) => {
+            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], moves = [];
+            for (let [diffRow, diffCol] of pos) {
+                for (let i = 1; ; i++) {
+                    let destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
+                    if (!this.onBoard(destinationCell) || this.getState(destinationCell) !== State.EMPTY) {
+                        break;
+                    } else {
+                        moves.push([destinationCell]);
+                    }
+                }
+            }
+            return moves;
         };
         let currentPiece = this.getState(cell);
         let moves = [];
@@ -111,12 +182,17 @@ export default class Checkers {
                     if (moves.length === 0)
                         moves = normalMove(cell);
                     break;
+                case Piece.KING:
+                    moves = captureMoveKing(cell);
+                    if (moves.length === 0)
+                        moves = normalMoveKing(cell);
+                    break;
             }
         }
         moves.map(x => {
             x.push(cell);
             x.reverse();
         });
-       return moves;
+        return moves;
     }
 }

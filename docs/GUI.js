@@ -1,6 +1,7 @@
 import State from './State.js';
 import Checkers from './Checkers.js';
 import Cell from './Cell.js';
+import Player from './Player.js';
 
 class GUI {
     constructor() {
@@ -75,9 +76,14 @@ class GUI {
                 let { x: dr, y: dc } = positions[i];
                 await new Promise(resolve => {
                     if (Math.abs(or - dr) >= 2) {
-                        let middleImage = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
-                        let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
-                        anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
+                        let rdiff = dr > or ? 1 : -1, cdiff = dc > oc ? 1 : -1;
+                        for (let i = 1; i < Math.abs(dr - or); i++) {
+                            let middleImage = document.querySelector(`tr:nth-child(${or + rdiff * i + 1}) td:nth-child(${oc + cdiff * i + 1}) img`);
+                            if (middleImage) {
+                                let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                                anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
+                            }
+                        }
                     }
                     let image = document.querySelector(`tr:nth-child(${or + 1}) td:nth-child(${oc + 1}) img`);
                     let moveImage = () => {
@@ -93,6 +99,15 @@ class GUI {
                         moveImage();
                     }
                 });
+            }
+            let table = document.querySelector("table");
+            let td = table.rows[end.x].cells[end.y];
+            if (this.game.getTurn() === Player.PLAYER2 && end.x === 0) {
+                td.innerHTML = `<img src="images/KING_PLAYER1.svg" alt="" />`;
+                td.firstChild.ondragstart = this.drag.bind(this);
+            } else if (this.game.getTurn() === Player.PLAYER1 && end.x === this.game.getBoard().length - 1) {
+                td.innerHTML = '<img src="images/KING_PLAYER2.svg" alt="" />';
+                td.firstChild.ondragstart = this.drag.bind(this);
             }
             this.changeMessage();
         } catch (ex) {
