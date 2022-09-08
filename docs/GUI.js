@@ -2,15 +2,23 @@ import State from './State.js';
 import Checkers from './Checkers.js';
 import Cell from './Cell.js';
 import Player from './Player.js';
+import BrazilianCheckers from './games/BrazilianCheckers.js';
+import EnglishCheckers from './games/EnglishCheckers.js';
+import CanadianCheckers from './games/CanadianCheckers.js';
+import InternationalCheckers from './games/InternationalCheckers.js';
 
 class GUI {
     constructor() {
         this.game = new Checkers();
         this.origin = null;
+        this.RULES = [BrazilianCheckers, CanadianCheckers, EnglishCheckers, InternationalCheckers];
     }
     init() {
+        let option = document.querySelector("#config");
+        this.game = new (this.RULES[option.selectedIndex])();
         let tab = this.game.getBoard();
         let tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
         for (let i = 0; i < tab.length; i++) {
             let tr = document.createElement("tr");
             for (let j = 0; j < tab[i].length; j++) {
@@ -153,6 +161,18 @@ class GUI {
             document.querySelector("table").rows[x].cells[y].className = 'selected';
         }
     }
+    registerEvents() {
+        let start = document.querySelector("#start");
+        start.onclick = this.init.bind(this);
+        let select = document.querySelector("#config");
+        select.onchange = this.init.bind(this);
+        for (let g of this.RULES) {
+            let o = document.createElement("option");
+            o.textContent = g.name;
+            select.appendChild(o);
+        }
+        this.init();
+    }
 }
 let gui = new GUI();
-gui.init();
+gui.registerEvents();

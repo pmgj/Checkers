@@ -7,6 +7,7 @@ import Winner from './Winner.js';
 
 export default class Checkers {
     constructor() {
+        this.name = name;
         this.rows = 8;
         this.cols = 8;
         this.turn = Player.PLAYER1;
@@ -22,6 +23,9 @@ export default class Checkers {
             [new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN)],
             [new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER1, Piece.MEN), new CellState(State.EMPTY)]
         ];
+    }
+    toString() {
+        return this.name;
     }
     getBoard() {
         return this.board;
@@ -88,110 +92,19 @@ export default class Checkers {
     }
     possibleMoves(cell) {
         let { x: row, y: col } = cell;
-        let captureMove = ({ x: crow, y: ccol }, visitedCells = []) => {
-            let adversaryPlayer = this.turn === Player.PLAYER1 ? State.PLAYER2 : State.PLAYER1;
-            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], coords = [];
-            for (let [diffRow, diffCol] of pos) {
-                let destinationCell = new Cell(crow + 2 * diffRow, ccol + 2 * diffCol);
-                let adversaryCell = new Cell(crow + diffRow, ccol + diffCol);
-                if (!visitedCells.find(c => c.equals(adversaryCell)) && this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
-                    visitedCells.push(adversaryCell);
-                    let moves = captureMove(destinationCell, visitedCells);
-                    if (moves.length === 0) {
-                        coords.push(destinationCell);
-                    } else {
-                        moves.forEach(v => v.push(destinationCell));
-                        coords.push(moves);
-                    }
-                    visitedCells.pop();
-                }
-            }
-            let poss = coords.flat().map(p => p instanceof Cell ? [p] : p);
-            let max = Math.max(...poss.map(p => p.length));
-            return poss.filter(p => p.length === max);
-        };
-        let normalMove = ({ x, y }) => {
-            let diags = this.turn === Player.PLAYER1 ? [new Cell(x - 1, y - 1), new Cell(x - 1, y + 1)] : [new Cell(x + 1, y - 1), new Cell(x + 1, y + 1)];
-            return diags.map(pos => (this.onBoard(pos) && this.getState(pos) === State.EMPTY) ? [pos] : null).filter(v => v);
-        };
-        let captureMoveKing = (currentCell, visitedCells = []) => {
-            let adversaryPlayer = (this.turn === Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
-            let { x: crow, y: ccol } = currentCell;
-            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], coords = [], destinationCell;
-            for (let [diffRow, diffCol] of pos) {
-                let i = 1;
-                let adv = false;
-                do {
-                    destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                    if (!this.onBoard(destinationCell) || visitedCells.find(c => c.equals(destinationCell))) {
-                        break;
-                    } else if (this.getState(destinationCell) === adversaryPlayer) {
-                        adv = true;
-                        break;
-                    } else if (this.getState(destinationCell) === State.EMPTY) {
-                        i++;
-                    } else {
-                        break;
-                    }
-                } while (true);
-                if (adv) {
-                    visitedCells.push(destinationCell);
-                    let cells = [];
-                    i++;
-                    do {
-                        destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                        if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY) {
-                            cells.push(destinationCell);
-                            i++;
-                        } else {
-                            break;
-                        }
-                    } while (true);
-                    if (cells.length > 0) {
-                        cells.forEach(c => {
-                            let moves = captureMoveKing(c, visitedCells);
-                            if (moves.length === 0) {
-                                coords.push(c);
-                            } else {
-                                moves.forEach(v => v.push(c));
-                                coords.push(moves);
-                            }
-                        });
-                    }
-                    visitedCells.pop();
-                }
-            }
-            let poss = coords.flat().map(p => p instanceof Cell ? [p] : p);
-            let max = Math.max(...poss.map(p => p.length));
-            return poss.filter(p => p.length === max);
-        };
-        let normalMoveKing = ({ x: crow, y: ccol }) => {
-            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], moves = [];
-            for (let [diffRow, diffCol] of pos) {
-                for (let i = 1; ; i++) {
-                    let destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                    if (!this.onBoard(destinationCell) || this.getState(destinationCell) !== State.EMPTY) {
-                        break;
-                    } else {
-                        moves.push([destinationCell]);
-                    }
-                }
-            }
-            return moves;
-        };
         let currentPiece = this.getState(cell);
         let moves = [];
         if ((this.turn === Player.PLAYER1 && currentPiece === State.PLAYER1) || (this.turn === Player.PLAYER2 && currentPiece === State.PLAYER2)) {
             switch (this.board[row][col].piece) {
                 case Piece.MEN:
-                    moves = captureMove(cell);
+                    moves = this.menCapture.possibleMoves(cell);
                     if (moves.length === 0)
-                        moves = normalMove(cell);
+                        moves = this.menMove.possibleMoves(cell);
                     break;
                 case Piece.KING:
-                    moves = captureMoveKing(cell);
+                    moves = this.kingCapture.possibleMoves(cell);
                     if (moves.length === 0)
-                        moves = normalMoveKing(cell);
+                        moves = this.kingMove.possibleMoves(cell);
                     break;
             }
         }
