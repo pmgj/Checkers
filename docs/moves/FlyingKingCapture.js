@@ -32,7 +32,7 @@ export default class FlyingKingCapture {
                 i++;
                 do {
                     destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                    if (this.checkers.onBoard(destinationCell) && this.checkers.getPiece(destinationCell) === State.EMPTY) {
+                    if (this.checkers.onBoard(destinationCell) && this.checkers.getState(destinationCell) === State.EMPTY) {
                         cells.push(destinationCell);
                         i++;
                     } else {
