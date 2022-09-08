@@ -49,7 +49,7 @@ export default class Checkers {
             throw new Error("Destination must be empty.");
         }
         let moves = this.possibleMoves(beginCell);
-        if (!moves.some(z => z.equals(endCell))) {
+        if (!moves.some(z => z[0].equals(beginCell) && z[z.length - 1].equals(endCell))) {
             throw new Error("This move is invalid.");
         }
         if (Math.abs(or - dr) === 1) {
@@ -86,6 +86,40 @@ export default class Checkers {
             let adversaryCell = new Cell(row + diffRow, col + diffCol);
             if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
                 moves.push(destinationCell);
+            }
+        }
+        return moves;
+    }
+    possibleMoves(cell) {
+        let { x: row, y: col } = cell;
+        let captureMove = currentCell => {
+            let adversaryPlayer = this.turn === Player.PLAYER1 ? State.PLAYER2 : State.PLAYER1;
+            let { x: crow, y: ccol } = currentCell;
+            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+            let coords = pos.map(([diffRow, diffCol]) => {
+                let destinationCell = new Cell(crow + 2 * diffRow, ccol + 2 * diffCol);
+                let adversaryCell = new Cell(crow + diffRow, ccol + diffCol);
+                if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
+                    return [currentCell, destinationCell];
+                }
+            }).filter(v => v);
+            return coords;
+        };
+        let normalMove = currentCell => {
+            let { x, y } = currentCell;
+            let diags = (this.turn === Player.PLAYER1) ? [new Cell(x - 1, y - 1), new Cell(x - 1, y + 1)] : [new Cell(x + 1, y - 1), new Cell(x + 1, y + 1)];
+            let coords = diags.map(pos => (this.onBoard(pos) && this.getState(pos) === State.EMPTY) ? [currentCell, pos] : null).filter(v => v);
+            return coords;
+        };
+        let currentPiece = this.getState(cell);
+        let moves = [];
+        if ((this.turn === Player.PLAYER1 && currentPiece === State.PLAYER1) || (this.turn === Player.PLAYER2 && currentPiece === State.PLAYER2)) {
+            switch (this.board[row][col].piece) {
+                case Piece.MEN:
+                    moves = captureMove(cell);
+                    if (moves.length === 0)
+                        moves = normalMove(cell);
+                    break;
             }
         }
         return moves;

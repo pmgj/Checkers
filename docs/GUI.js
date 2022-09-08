@@ -37,7 +37,7 @@ class GUI {
         msg.textContent = message;
     }
     changeMessage() {
-        let msgs = {PLAYER1: "White's turn.", PLAYER2: "Black's turn."};
+        let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
         this.setMessage(msgs[this.game.getTurn()]);
     }
     play(evt) {
@@ -69,20 +69,20 @@ class GUI {
             this.game.move(begin, end);
             const time = 1000;
             let image = beginCell.firstChild;
-            let {x: or, y: oc} = begin;
-            let {x: dr, y: dc} = end;
+            let { x: or, y: oc } = begin;
+            let { x: dr, y: dc } = end;
             let removeOpponentPiece = () => endCell.appendChild(image);
             if (animation) {
                 let td = document.querySelector("td");
                 let size = td.offsetWidth;
-                let anim = image.animate([{top: 0, left: 0}, {top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px`}], time);
+                let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
                 anim.onfinish = removeOpponentPiece;
             } else {
                 removeOpponentPiece();
             }
             if (Math.abs(or - dr) === 2) {
                 let middleImage = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
-                let anim = middleImage.animate([{opacity: 1}, {opacity: 0}], time);
+                let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
                 anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
             }
             this.changeMessage();
@@ -94,12 +94,13 @@ class GUI {
     showPossibleMoves(cell) {
         let coords = this.coordinates(cell);
         let moves = this.game.possibleMoves(coords);
-        moves.push(coords);
-        for (let {x, y} of moves) {
-            let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
-            tempCell.className = 'selected';
+        for (let move of moves) {
+            move.forEach(({ x, y }) => {
+                let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
+                tempCell.className = 'selected';
+            });
         }
-        if (moves.length === 1) {
+        if (moves.length === 0) {
             this.setMessage("No possible moves for this piece. ");
         }
     }
