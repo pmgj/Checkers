@@ -43,7 +43,7 @@ class GUI {
     play(evt) {
         let td = evt.currentTarget;
         if (this.origin) {
-            this.innerPlay(this.origin, td);
+            this.innerPlay(this.origin, td, true);
         } else {
             this.origin = td;
             this.showPossibleMoves(td);
@@ -59,22 +59,31 @@ class GUI {
     drop(evt) {
         let td = evt.currentTarget;
         evt.preventDefault();
-        this.innerPlay(this.origin, td);
+        this.innerPlay(this.origin, td, false);
     }
-    innerPlay(beginCell, endCell) {
+    innerPlay(beginCell, endCell, animation) {
         this.hidePossibleMoves();
         let begin = this.coordinates(beginCell);
         let end = this.coordinates(endCell);
         try {
             this.game.move(begin, end);
+            const time = 1000;
             let image = beginCell.firstChild;
-            endCell.innerHTML = "";
-            endCell.appendChild(image);
             let {x: or, y: oc} = begin;
             let {x: dr, y: dc} = end;
+            let removeOpponentPiece = () => endCell.appendChild(image);
+            if (animation) {
+                let td = document.querySelector("td");
+                let size = td.offsetWidth;
+                let anim = image.animate([{top: 0, left: 0}, {top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px`}], time);
+                anim.onfinish = removeOpponentPiece;
+            } else {
+                removeOpponentPiece();
+            }
             if (Math.abs(or - dr) === 2) {
-                let img = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
-                img.parentNode.removeChild(img);
+                let middleImage = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
+                let anim = middleImage.animate([{opacity: 1}, {opacity: 0}], time);
+                anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
             }
             this.changeMessage();
         } catch (ex) {
