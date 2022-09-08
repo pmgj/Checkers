@@ -3,10 +3,11 @@ package model.moves;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import model.Cell;
-import model.CellState;
 import model.Checkers;
 import model.Player;
+import model.State;
 
 public class FlyingKingCapture extends Moves {
 
@@ -20,7 +21,7 @@ public class FlyingKingCapture extends Moves {
     }
 
     private List<List<Cell>> possibleMoves(Cell currentCell, List<Cell> visitedCells) {
-        CellState adversaryPlayer = (checkers.getTurn() == Player.PLAYER1) ? CellState.PLAYER2 : CellState.PLAYER1;
+        State adversaryPlayer = (checkers.getTurn() == Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
         List<List<Cell>> coords = new ArrayList<>();
         int crow = currentCell.getX(), ccol = currentCell.getY();
         int[][] pos = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
@@ -32,10 +33,10 @@ public class FlyingKingCapture extends Moves {
                 destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
                 if (!checkers.onBoard(destinationCell) || visitedCells.contains(destinationCell)) {
                     break;
-                } else if (checkers.getPiece(destinationCell) == adversaryPlayer) {
+                } else if (checkers.getState(destinationCell) == adversaryPlayer) {
                     adv = true;
                     break;
-                } else if (checkers.getPiece(destinationCell) == CellState.EMPTY) {
+                } else if (checkers.getState(destinationCell) == State.EMPTY) {
                     i++;
                 } else {
                     break;
@@ -48,7 +49,7 @@ public class FlyingKingCapture extends Moves {
                 i++;
                 do {
                     destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                    if (checkers.onBoard(destinationCell) && checkers.getPiece(destinationCell) == CellState.EMPTY) {
+                    if (checkers.onBoard(destinationCell) && checkers.getState(destinationCell) == State.EMPTY) {
                         cells.add(destinationCell);
                         i++;
                     } else {

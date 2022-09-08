@@ -3,9 +3,10 @@ package model.moves;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import model.Cell;
-import model.CellState;
 import model.Checkers;
+import model.State;
 
 public class FlyingKingMove extends Moves {
 
@@ -22,7 +23,7 @@ public class FlyingKingMove extends Moves {
             int diffRow = po[0], diffCol = po[1], i = 1;
             do {
                 Cell destinationCell = new Cell(crow + i * diffRow, ccol + i * diffCol);
-                if (!checkers.onBoard(destinationCell) || checkers.getPiece(destinationCell) != CellState.EMPTY) {
+                if (!checkers.onBoard(destinationCell) || checkers.getState(destinationCell) != State.EMPTY) {
                     break;
                 } else {
                     List<Cell> temp = new ArrayList<>();

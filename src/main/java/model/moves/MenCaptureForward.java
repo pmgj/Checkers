@@ -3,10 +3,11 @@ package model.moves;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import model.Cell;
-import model.CellState;
 import model.Checkers;
 import model.Player;
+import model.State;
 
 public class MenCaptureForward extends Moves {
 
@@ -20,13 +21,13 @@ public class MenCaptureForward extends Moves {
     }
 
     private List<List<Cell>> possibleMoves(Cell currentCell, List<Cell> visitedCells) {        
-        CellState adversaryPlayer;
+        State adversaryPlayer;
         int[][] pos;
         if(checkers.getTurn() == Player.PLAYER1) {
-            adversaryPlayer = CellState.PLAYER2;
+            adversaryPlayer = State.PLAYER2;
             pos = new int[][]{{-1, -1}, {-1, 1}};
         } else {
-            adversaryPlayer = CellState.PLAYER1;
+            adversaryPlayer = State.PLAYER1;
             pos = new int[][]{{1, -1}, {1, 1}};
         }
         int crow = currentCell.getX(), ccol = currentCell.getY();
@@ -35,7 +36,7 @@ public class MenCaptureForward extends Moves {
             int diffRow = po[0], diffCol = po[1];
             Cell destinationCell = new Cell(crow + 2 * diffRow, ccol + 2 * diffCol);
             Cell adversaryCell = new Cell(crow + diffRow, ccol + diffCol);
-            if (!visitedCells.contains(adversaryCell) && checkers.onBoard(destinationCell) && checkers.getPiece(destinationCell) == CellState.EMPTY && checkers.getPiece(adversaryCell) == adversaryPlayer) {
+            if (!visitedCells.contains(adversaryCell) && checkers.onBoard(destinationCell) && checkers.getState(destinationCell) == State.EMPTY && checkers.getState(adversaryCell) == adversaryPlayer) {
                 visitedCells.add(adversaryCell);
                 List<List<Cell>> moves = possibleMoves(destinationCell, visitedCells);
                 if (moves.isEmpty()) {

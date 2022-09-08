@@ -1,5 +1,9 @@
 import Cell from "./Cell.js";
 import Player from "./Player.js";
+import State from "./State.js";
+import ConnectionType from "./ConnectionType.js";
+import Piece from "./Piece.js";
+import Winner from "./Winner.js";
 
 class GUI {
     constructor() {
@@ -29,9 +33,9 @@ class GUI {
             let tr = document.createElement("tr");
             for (let j = 0; j < transMatrix[i].length; j++) {
                 let td = document.createElement("td");
-                if (transMatrix[i][j] !== "EMPTY") {
+                if (transMatrix[i][j].state !== State.EMPTY) {
                     let img = document.createElement("img");
-                    img.src = `images/${transMatrix[i][j]}.svg`;
+                    img.src = `images/${transMatrix[i][j].piece}_${transMatrix[i][j].state}.svg`;
                     td.appendChild(img);
                 }
                 td.onclick = this.play.bind(this);
@@ -89,25 +93,25 @@ class GUI {
         this.ws.close(closeObj.code, closeObj.description);
         this.ws = null;
         this.setButtonText(true);
-        this.writeResponse(`Game Over! ${(winner === "DRAW") ? "Draw!" : (winner === this.player ? "You win!" : "You lose!")}`);
+        this.writeResponse(`Game Over! ${(winner === Winner.DRAW) ? "Draw!" : (winner === this.player ? "You win!" : "You lose!")}`);
     }
     async onMessage(evt) {
         let data = JSON.parse(evt.data);
         console.log(data);
         let game = data.game;
         switch (data.type) {
-            case "OPEN":
+            case ConnectionType.OPEN:
                 this.player = data.turn;
                 this.writeResponse("Waiting for opponent.");
                 break;
-            case "CREATE_BOARD":
+            case ConnectionType.CREATE_BOARD:
                 this.printBoard(game.board);
                 this.writeResponse(this.player === game.turn ? "It's your turn." : "Wait for your turn.");
                 break;
-            case "SHOW_MOVES":
+            case ConnectionType.SHOW_MOVES:
                 this.showPossibleMoves(data.possibleMoves);
                 break;
-            case "MOVE_PIECE":
+            case ConnectionType.MOVE_PIECE:
                 const time = 1000;
                 let positions = game.positions;
                 for (let i = 1; i < positions.length; i++) {
@@ -140,16 +144,17 @@ class GUI {
                 let { x, y } = this.getCorrectCell(end);
                 let table = document.querySelector("table");
                 let td = table.rows[x].cells[y];
-                if (game.board[end.x][end.y] === "KING_PLAYER1" || game.board[end.x][end.y] === "KING_PLAYER2") {
-                    td.innerHTML = `<img src="images/${game.board[end.x][end.y]}.svg" alt="" />`;
+                let endPiece = game.board[end.x][end.y];
+                if (endPiece.piece === Piece.KING) {
+                    td.innerHTML = `<img src="images/${endPiece.piece}_${endPiece.state}.svg" alt="" />`;
                 }
-                if (game.winner === "NONE") {
+                if (game.winner === Winner.NONE) {
                     this.writeResponse(this.player === game.turn ? `It's your turn.` : `Wait for your turn.`);
                 } else {
                     this.endGame(this.closeCodes.ENDGAME, game.winner);
                 }
                 break;
-            case "QUIT_GAME":
+            case ConnectionType.QUIT_GAME:
                 this.endGame(1000, data.turn);
                 break;
         }

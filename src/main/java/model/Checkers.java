@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import model.moves.Moves;
 
 public abstract class Checkers {
@@ -36,22 +37,13 @@ public abstract class Checkers {
         return positions;
     }
 
-    public CellState getPiece(Cell cell) {
-        switch (board[cell.getX()][cell.getY()]) {
-            case MEN_PLAYER1:
-            case KING_PLAYER1:
-                return CellState.PLAYER1;
-            case MEN_PLAYER2:
-            case KING_PLAYER2:
-                return CellState.PLAYER2;
-            default:
-                return CellState.EMPTY;
-        }
+    public State getState(Cell cell) {
+        return this.board[cell.getX()][cell.getY()].getState();
     }
 
-    private long countPieces(CellState piece) {
+    private long countPieces(State piece) {
         Stream<CellState> stream = Arrays.stream(board).flatMap(x -> Arrays.stream(x));
-        return stream.filter(c -> c == piece).count();
+        return stream.filter(c -> c.getState() == piece).count();
     }
 
     private List<List<Cell>> getMandatoryCaptureMoves() {
@@ -61,9 +53,9 @@ public abstract class Checkers {
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
                 Cell currentCell = new Cell(i, j);
-                CellState currentPiece = getPiece(currentCell);
-                if ((currentPiece == CellState.PLAYER1 && turn == Player.PLAYER1)
-                        || (currentPiece == CellState.PLAYER2 && turn == Player.PLAYER2)) {
+                State currentPiece = getState(currentCell);
+                if ((currentPiece == State.PLAYER1 && turn == Player.PLAYER1)
+                        || (currentPiece == State.PLAYER2 && turn == Player.PLAYER2)) {
                     List<List<Cell>> pm = showPossibleMoves(currentCell);
                     if (!pm.isEmpty()) {
                         List<Cell> temp = pm.get(0);
@@ -114,11 +106,11 @@ public abstract class Checkers {
             throw new Exception("Origin or destination cell is not on board.");
         }
         /* Origem possui uma peça? */
-        if (getPiece(beginCell) == CellState.EMPTY) {
+        if (getState(beginCell) == State.EMPTY) {
             throw new Exception("Origin cell is empty.");
         }
         /* Destino deve estar vazio */
-        if (getPiece(endCell) != CellState.EMPTY) {
+        if (getState(endCell) != State.EMPTY) {
             throw new Exception("Destination cell must be empty.");
         }
         /* A jogada é possível? */
@@ -126,7 +118,7 @@ public abstract class Checkers {
         if (!moves.stream().anyMatch(z -> z.get(0).equals(beginCell) && z.get(z.size() - 1).equals(endCell))) {
             throw new Exception("This move is invalid.");
         }
-        CellState currentPiece = getPiece(beginCell);
+        State currentPiece = getState(beginCell);
         this.positions = moves.stream()
                 .filter(z -> z.get(0).equals(beginCell) && z.get(z.size() - 1).equals(endCell)).findFirst()
                 .orElse(new ArrayList<>());
@@ -136,16 +128,16 @@ public abstract class Checkers {
             board[x][y] = board[a][b];
             int rdiff = x > a ? 1 : -1, cdiff = y > b ? 1 : -1;
             for (int i = 0; i < Math.abs(x - a); i++) {
-                board[a + rdiff * i][b + cdiff * i] = CellState.EMPTY;
+                board[a + rdiff * i][b + cdiff * i] = new CellState(State.EMPTY);
             }
             a = x;
             b = y;
         }
         /* Criar Dama */
-        if (currentPiece == CellState.PLAYER1 && dr == 0) {
-            board[dr][dc] = CellState.KING_PLAYER1;
-        } else if (currentPiece == CellState.PLAYER2 && dr == board.length - 1) {
-            board[dr][dc] = CellState.KING_PLAYER2;
+        if (currentPiece == State.PLAYER1 && dr == 0) {
+            board[dr][dc] = new CellState(State.PLAYER1, Piece.KING);
+        } else if (currentPiece == State.PLAYER2 && dr == board.length - 1) {
+            board[dr][dc] = new CellState(State.PLAYER2, Piece.KING);
         }
         turn = (turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         /* Verificar fim de jogo */
@@ -154,8 +146,8 @@ public abstract class Checkers {
 
     private Winner endOfGame() {
         /* Se um jogador não tem mais peças, perde o jogo */
-        long numP1 = countPieces(CellState.MEN_PLAYER1) + countPieces(CellState.KING_PLAYER1);
-        long numP2 = countPieces(CellState.MEN_PLAYER2) + countPieces(CellState.KING_PLAYER2);
+        long numP1 = countPieces(State.PLAYER1);
+        long numP2 = countPieces(State.PLAYER2);
         if (numP1 == 0 && numP2 == 0) {
             return Winner.DRAW;
         } else if (numP1 == 0) {
@@ -178,16 +170,14 @@ public abstract class Checkers {
     public List<List<Cell>> showPossibleMoves(Cell cell) {
         int row = cell.getX(), col = cell.getY();
         List<List<Cell>> moves = new ArrayList<>();
-        switch (board[row][col]) {
-            case MEN_PLAYER1:
-            case MEN_PLAYER2:
+        switch (board[row][col].getPiece()) {
+            case MEN:
                 moves = this.menCapture.possibleMoves(cell);
                 if (moves.isEmpty()) {
                     moves = this.menMove.possibleMoves(cell);
                 }
                 break;
-            case KING_PLAYER1:
-            case KING_PLAYER2:
+            case KING:
                 moves = this.kingCapture.possibleMoves(cell);
                 if (moves.isEmpty()) {
                     moves = this.kingMove.possibleMoves(cell);
@@ -211,25 +201,15 @@ public abstract class Checkers {
         for (CellState[] b : board) {
             for (CellState c : b) {
                 System.out.print("| ");
-                switch (c) {
-                    case MEN_PLAYER1:
-                        System.out.print("\u25CB");
+                switch (c.getPiece()) {
+                    case MEN:
+                        System.out.print("M");
                         break;
-                    case MEN_PLAYER2:
-                        System.out.print("\u25CF");
-                        break;
-                    case KING_PLAYER1:
-                        System.out.print("\u2655");
-                        break;
-                    case KING_PLAYER2:
-                        System.out.print("\u265B");
-                        break;
-                    case EMPTY:
-                        System.out.print(" ");
-                        break;
-                    default:
+                    case KING:
+                        System.out.print("K");
                         break;
                 }
+                System.out.print(c.getState() == State.PLAYER1 ? "1" : "2");
                 System.out.print(" ");
             }
             System.out.println("|");
