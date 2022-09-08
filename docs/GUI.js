@@ -27,6 +27,7 @@ class GUI {
             }
             tbody.appendChild(tr);
         }
+        this.changeMessage();
     }
     coordinates(cell) {
         return new Cell(cell.parentNode.rowIndex, cell.cellIndex);
@@ -41,10 +42,11 @@ class GUI {
     }
     play(evt) {
         let td = evt.currentTarget;
-        if (this.origin === null) {
-            this.origin = td;
-        } else {
+        if (this.origin) {
             this.innerPlay(this.origin, td);
+        } else {
+            this.origin = td;
+            this.showPossibleMoves(td);
         }
     }
     drag(evt) {
@@ -60,17 +62,41 @@ class GUI {
         this.innerPlay(this.origin, td);
     }
     innerPlay(beginCell, endCell) {
+        this.hidePossibleMoves();
         let begin = this.coordinates(beginCell);
         let end = this.coordinates(endCell);
         try {
             this.game.move(begin, end);
             let image = beginCell.firstChild;
+            endCell.innerHTML = "";
             endCell.appendChild(image);
+            let {x: or, y: oc} = begin;
+            let {x: dr, y: dc} = end;
+            if (Math.abs(or - dr) === 2) {
+                let img = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
+                img.parentNode.removeChild(img);
+            }
             this.changeMessage();
         } catch (ex) {
             this.setMessage(ex.message);
         }
         this.origin = null;
+    }
+    showPossibleMoves(cell) {
+        let coords = this.coordinates(cell);
+        let moves = this.game.possibleMoves(coords);
+        moves.push(coords);
+        for (let {x, y} of moves) {
+            let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
+            tempCell.className = 'selected';
+        }
+        if (moves.length === 1) {
+            this.setMessage("No possible moves for this piece. ");
+        }
+    }
+    hidePossibleMoves() {
+        let cells = document.querySelectorAll("td");
+        cells.forEach(c => c.className = '');
     }
 }
 let gui = new GUI();

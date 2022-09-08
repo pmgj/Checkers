@@ -2,6 +2,7 @@ import CellState from './CellState.js';
 import State from './State.js';
 import Piece from './Piece.js';
 import Player from './Player.js';
+import Cell from './Cell.js';
 
 export default class Checkers {
     constructor() {
@@ -47,9 +48,19 @@ export default class Checkers {
         if (this.getState(endCell) !== State.EMPTY) {
             throw new Error("Destination must be empty.");
         }
-        /* Realizar movimento */
-        this.board[dr][dc] = this.board[or][oc];
-        this.board[or][oc] = new CellState(State.EMPTY);
+        let moves = this.possibleMoves(beginCell);
+        if (!moves.some(z => z.equals(endCell))) {
+            throw new Error("This move is invalid.");
+        }
+        if (Math.abs(or - dr) === 1) {
+            this.board[dr][dc] = this.board[or][oc];
+            this.board[or][oc] = new CellState(State.EMPTY);
+        }
+        if (Math.abs(or - dr) === 2) {
+            this.board[dr][dc] = this.board[or][oc];
+            this.board[or][oc] = new CellState(State.EMPTY);
+            this.board[(or + dr) / 2][(oc + dc) / 2] = new CellState(State.EMPTY);
+        }
         this.turn = this.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
     }
     getState({ x, y }) {
@@ -58,5 +69,25 @@ export default class Checkers {
     onBoard({ x, y }) {
         let inLimit = (value, limit) => value >= 0 && value < limit;
         return (inLimit(x, this.rows) && inLimit(y, this.cols));
+    }
+    possibleMoves(cell) {
+        let { x: row, y: col } = cell;
+        let moves = [];
+        let diags = (this.turn === Player.PLAYER1) ? [new Cell(row - 1, col - 1), new Cell(row - 1, col + 1)] : [new Cell(row + 1, col - 1), new Cell(row + 1, col + 1)];
+        diags.forEach(pos => {
+            if (this.onBoard(pos) && this.getState(pos) === State.EMPTY) {
+                moves.push(pos);
+            }
+        });
+        let adversaryPlayer = (this.turn === Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
+        let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+        for (let [diffRow, diffCol] of pos) {
+            let destinationCell = new Cell(row + 2 * diffRow, col + 2 * diffCol);
+            let adversaryCell = new Cell(row + diffRow, col + diffCol);
+            if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
+                moves.push(destinationCell);
+            }
+        }
+        return moves;
     }
 }

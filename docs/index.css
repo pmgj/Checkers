@@ -27,3 +27,7 @@ img {
 #message {
     text-align: center;
 }
+
+.selected {
+    border: 3px solid red;
+}
