@@ -47,13 +47,13 @@ class GUI {
             this.innerPlay(this.origin, td, true);
         } else {
             this.origin = td;
-            this.showPossibleMoves(td);
+            this.showMandatoryCaptureMoves(td);
         }
     }
     drag(evt) {
         let td = evt.currentTarget;
         this.origin = td.parentNode;
-        this.showPossibleMoves(this.origin);
+        this.showMandatoryCaptureMoves(this.origin);
     }
     allowDrop(evt) {
         evt.preventDefault();
@@ -116,8 +116,7 @@ class GUI {
         this.origin = null;
     }
     showPossibleMoves(cell) {
-        let coords = this.coordinates(cell);
-        let moves = this.game.possibleMoves(coords);
+        let moves = this.game.possibleMoves(cell);
         for (let move of moves) {
             move.forEach(({ x, y }, index, array) => {
                 let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
@@ -137,6 +136,17 @@ class GUI {
     getTableData({ x, y }) {
         let table = document.querySelector("table");
         return table.rows[x].cells[y];
+    }
+    showMandatoryCaptureMoves(cell) {
+        let currentCell = this.coordinates(cell);
+        let cells = this.game.getMandatoryCaptureMoves();
+        if (cells.some(elem => elem[0].equals(currentCell))) {
+            this.showPossibleMoves(currentCell);
+        } else {
+            this.setMessage('Select the piece that captures most adversary pieces!');
+            let {x, y} = cells[0][0];
+            document.querySelector("table").rows[x].cells[y].className = 'selected';
+        }
     }
 }
 let gui = new GUI();

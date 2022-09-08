@@ -52,7 +52,7 @@ export default class Checkers {
         if (this.getState(endCell) !== State.EMPTY) {
             throw new Error("Destination must be empty.");
         }
-        let moves = this.possibleMoves(beginCell);
+        let moves = this.getMandatoryCaptureMoves();
         if (!moves.some(z => z[0].equals(beginCell) && z[z.length - 1].equals(endCell))) {
             throw new Error("This move is invalid.");
         }
@@ -193,6 +193,38 @@ export default class Checkers {
             x.push(cell);
             x.reverse();
         });
+        return moves;
+    }
+    getMandatoryCaptureMoves() {
+        let moves = [], maxLength = 0, capture = false;
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                let currentCell = new Cell(i, j);
+                let currentPiece = this.getState(currentCell);
+                if ((currentPiece === State.PLAYER1 && this.turn === Player.PLAYER1) || (currentPiece === State.PLAYER2 && this.turn === Player.PLAYER2)) {
+                    let pm = this.possibleMoves(currentCell);
+                    if (pm.length > 0) {
+                        if (pm[0].length > maxLength) {
+                            moves = [];
+                            maxLength = pm[0].length;
+                        }
+                        if (pm[0].length === maxLength) {
+                            let temp = pm[0];
+                            if (Math.abs(temp[0].x - temp[1].x) >= 2) {
+                                capture = true;
+                            }
+                            pm.forEach(p => moves.push(p));
+                        }
+                    }
+                }
+            }
+        }
+        if (capture) {
+            let temp = moves.filter(m => Math.abs(m[0].x - m[1].x) >= 2);
+            if (temp) {
+                moves = temp;
+            }
+        }
         return moves;
     }
 }
