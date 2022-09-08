@@ -23,3 +23,7 @@ tr:nth-child(2n) td:nth-child(2n+1) {
 img {
     vertical-align: middle;
 }
+
+#message {
+    text-align: center;
+}
