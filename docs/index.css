@@ -33,3 +33,11 @@ img {
 .selected {
     border: 3px solid red;
 }
+
+.middlePath {
+    border: 3px solid blue;
+}
+
+.endPath {
+    border: 3px solid orange;
+}

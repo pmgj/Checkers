@@ -9,6 +9,7 @@ export default class Checkers {
         this.rows = 8;
         this.cols = 8;
         this.turn = Player.PLAYER1;
+        this.positions = null;
         this.board = [
             [new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN)],
             [new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY)],
@@ -26,9 +27,11 @@ export default class Checkers {
     getTurn() {
         return this.turn;
     }
+    getPositions() {
+        return this.positions;
+    }
     move(beginCell, endCell) {
         let { x: or, y: oc } = beginCell;
-        let { x: dr, y: dc } = endCell;
         if (!beginCell || !endCell) {
             throw new Error("The value of one of the cells does not exist.");
         }
@@ -52,15 +55,16 @@ export default class Checkers {
         if (!moves.some(z => z[0].equals(beginCell) && z[z.length - 1].equals(endCell))) {
             throw new Error("This move is invalid.");
         }
-        if (Math.abs(or - dr) === 1) {
-            this.board[dr][dc] = this.board[or][oc];
-            this.board[or][oc] = new CellState(State.EMPTY);
-        }
-        if (Math.abs(or - dr) === 2) {
-            this.board[dr][dc] = this.board[or][oc];
-            this.board[or][oc] = new CellState(State.EMPTY);
-            this.board[(or + dr) / 2][(oc + dc) / 2] = new CellState(State.EMPTY);
-        }
+        let a = or, b = oc;
+        this.positions = moves.find(z => z[0].equals(beginCell) && z[z.length - 1].equals(endCell));
+        this.positions.forEach(({ x, y }) => {
+            this.board[x][y] = this.board[a][b];
+            let rdiff = x > a ? 1 : -1, cdiff = y > b ? 1 : -1;
+            for (let i = 0; i < Math.abs(x - a); i++) {
+                this.board[a + rdiff * i][b + cdiff * i] = new CellState(State.EMPTY);
+            }
+            a = x, b = y;
+        });
         this.turn = this.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
     }
     getState({ x, y }) {
@@ -72,44 +76,31 @@ export default class Checkers {
     }
     possibleMoves(cell) {
         let { x: row, y: col } = cell;
-        let moves = [];
-        let diags = (this.turn === Player.PLAYER1) ? [new Cell(row - 1, col - 1), new Cell(row - 1, col + 1)] : [new Cell(row + 1, col - 1), new Cell(row + 1, col + 1)];
-        diags.forEach(pos => {
-            if (this.onBoard(pos) && this.getState(pos) === State.EMPTY) {
-                moves.push(pos);
-            }
-        });
-        let adversaryPlayer = (this.turn === Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
-        let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-        for (let [diffRow, diffCol] of pos) {
-            let destinationCell = new Cell(row + 2 * diffRow, col + 2 * diffCol);
-            let adversaryCell = new Cell(row + diffRow, col + diffCol);
-            if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
-                moves.push(destinationCell);
-            }
-        }
-        return moves;
-    }
-    possibleMoves(cell) {
-        let { x: row, y: col } = cell;
-        let captureMove = currentCell => {
+        let captureMove = ({x: crow, y: ccol}, visitedCells = []) => {
             let adversaryPlayer = this.turn === Player.PLAYER1 ? State.PLAYER2 : State.PLAYER1;
-            let { x: crow, y: ccol } = currentCell;
-            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-            let coords = pos.map(([diffRow, diffCol]) => {
+            let pos = [[-1, -1], [-1, 1], [1, -1], [1, 1]], coords = [];
+            for (let [diffRow, diffCol] of pos) {
                 let destinationCell = new Cell(crow + 2 * diffRow, ccol + 2 * diffCol);
                 let adversaryCell = new Cell(crow + diffRow, ccol + diffCol);
-                if (this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
-                    return [currentCell, destinationCell];
+                if (!visitedCells.find(c => c.equals(adversaryCell)) && this.onBoard(destinationCell) && this.getState(destinationCell) === State.EMPTY && this.getState(adversaryCell) === adversaryPlayer) {
+                    visitedCells.push(adversaryCell);
+                    let moves = captureMove(destinationCell, visitedCells);
+                    if (moves.length === 0) {
+                        coords.push(destinationCell);
+                    } else {
+                        moves.forEach(v => v.push(destinationCell));
+                        coords.push(moves);
+                    }
+                    visitedCells.pop();
                 }
-            }).filter(v => v);
-            return coords;
+            }
+            let poss = coords.flat().map(p => p instanceof Cell ? [p] : p);
+            let max = Math.max(...poss.map(p => p.length));
+            return poss.filter(p => p.length === max);
         };
-        let normalMove = currentCell => {
-            let { x, y } = currentCell;
-            let diags = (this.turn === Player.PLAYER1) ? [new Cell(x - 1, y - 1), new Cell(x - 1, y + 1)] : [new Cell(x + 1, y - 1), new Cell(x + 1, y + 1)];
-            let coords = diags.map(pos => (this.onBoard(pos) && this.getState(pos) === State.EMPTY) ? [currentCell, pos] : null).filter(v => v);
-            return coords;
+        let normalMove = ({x, y}) => {
+            let diags = this.turn === Player.PLAYER1 ? [new Cell(x - 1, y - 1), new Cell(x - 1, y + 1)] : [new Cell(x + 1, y - 1), new Cell(x + 1, y + 1)];
+            return diags.map(pos => (this.onBoard(pos) && this.getState(pos) === State.EMPTY) ? [pos] : null).filter(v => v);
         };
         let currentPiece = this.getState(cell);
         let moves = [];
@@ -122,6 +113,10 @@ export default class Checkers {
                     break;
             }
         }
-        return moves;
+        moves.map(x => {
+            x.push(cell);
+            x.reverse();
+        });
+       return moves;
     }
 }

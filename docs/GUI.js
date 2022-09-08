@@ -52,6 +52,7 @@ class GUI {
     drag(evt) {
         let td = evt.currentTarget;
         this.origin = td.parentNode;
+        this.showPossibleMoves(this.origin);
     }
     allowDrop(evt) {
         evt.preventDefault();
@@ -61,29 +62,37 @@ class GUI {
         evt.preventDefault();
         this.innerPlay(this.origin, td, false);
     }
-    innerPlay(beginCell, endCell, animation) {
+    async innerPlay(beginCell, endCell, animation) {
         this.hidePossibleMoves();
         let begin = this.coordinates(beginCell);
         let end = this.coordinates(endCell);
         try {
             this.game.move(begin, end);
+            let positions = this.game.getPositions();
             const time = 1000;
-            let image = beginCell.firstChild;
-            let { x: or, y: oc } = begin;
-            let { x: dr, y: dc } = end;
-            let removeOpponentPiece = () => endCell.appendChild(image);
-            if (animation) {
-                let td = document.querySelector("td");
-                let size = td.offsetWidth;
-                let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
-                anim.onfinish = removeOpponentPiece;
-            } else {
-                removeOpponentPiece();
-            }
-            if (Math.abs(or - dr) === 2) {
-                let middleImage = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
-                let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
-                anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
+            for (let i = 1; i < positions.length; i++) {
+                let { x: or, y: oc } = positions[i - 1];
+                let { x: dr, y: dc } = positions[i];
+                await new Promise(resolve => {
+                    if (Math.abs(or - dr) >= 2) {
+                        let middleImage = document.querySelector(`tr:nth-child(${(or + dr) / 2 + 1}) td:nth-child(${(oc + dc) / 2 + 1}) img`);
+                        let anim = middleImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                        anim.onfinish = () => middleImage.parentNode.removeChild(middleImage);
+                    }
+                    let image = document.querySelector(`tr:nth-child(${or + 1}) td:nth-child(${oc + 1}) img`);
+                    let moveImage = () => {
+                        this.getTableData(positions[i]).appendChild(image);
+                        resolve(true);
+                    };
+                    if (animation) {
+                        let td = document.querySelector("td");
+                        let size = td.offsetWidth;
+                        let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
+                        anim.onfinish = moveImage;
+                    } else {
+                        moveImage();
+                    }
+                });
             }
             this.changeMessage();
         } catch (ex) {
@@ -95,9 +104,11 @@ class GUI {
         let coords = this.coordinates(cell);
         let moves = this.game.possibleMoves(coords);
         for (let move of moves) {
-            move.forEach(({ x, y }) => {
+            move.forEach(({ x, y }, index, array) => {
                 let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
-                tempCell.className = 'selected';
+                if (tempCell.className !== 'endPath') {
+                    tempCell.className = (index === 0) ? 'selected' : (index === array.length - 1) ? 'endPath' : 'middlePath';
+                }
             });
         }
         if (moves.length === 0) {
@@ -107,6 +118,10 @@ class GUI {
     hidePossibleMoves() {
         let cells = document.querySelectorAll("td");
         cells.forEach(c => c.className = '');
+    }
+    getTableData({ x, y }) {
+        let table = document.querySelector("table");
+        return table.rows[x].cells[y];
     }
 }
 let gui = new GUI();
