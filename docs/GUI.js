@@ -37,9 +37,14 @@ class GUI {
         let msg = document.getElementById("message");
         msg.textContent = message;
     }
-    changeMessage() {
-        let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
-        this.setMessage(msgs[this.game.getTurn()]);
+    changeMessage(m) {
+        let objs = { DRAW: "Draw!", PLAYER2: "Black's win!", PLAYER1: "White's win!" };
+        if (objs[m]) {
+            this.setMessage(`Game Over! ${objs[m]}`);
+        } else {
+            let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
+            this.setMessage(msgs[this.game.getTurn()]);
+        }
     }
     play(evt) {
         let td = evt.currentTarget;
@@ -109,7 +114,7 @@ class GUI {
                 td.innerHTML = '<img src="images/KING_PLAYER2.svg" alt="" />';
                 td.firstChild.ondragstart = this.drag.bind(this);
             }
-            this.changeMessage();
+            this.changeMessage(this.game.getWinner());
         } catch (ex) {
             this.setMessage(ex.message);
         }
@@ -144,7 +149,7 @@ class GUI {
             this.showPossibleMoves(currentCell);
         } else {
             this.setMessage('Select the piece that captures most adversary pieces!');
-            let {x, y} = cells[0][0];
+            let { x, y } = cells[0][0];
             document.querySelector("table").rows[x].cells[y].className = 'selected';
         }
     }

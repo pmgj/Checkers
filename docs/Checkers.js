@@ -3,6 +3,7 @@ import State from './State.js';
 import Piece from './Piece.js';
 import Player from './Player.js';
 import Cell from './Cell.js';
+import Winner from './Winner.js';
 
 export default class Checkers {
     constructor() {
@@ -10,6 +11,7 @@ export default class Checkers {
         this.cols = 8;
         this.turn = Player.PLAYER1;
         this.positions = null;
+        this.winner = Winner.NONE;
         this.board = [
             [new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN)],
             [new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY), new CellState(State.PLAYER2, Piece.MEN), new CellState(State.EMPTY)],
@@ -29,6 +31,9 @@ export default class Checkers {
     }
     getPositions() {
         return this.positions;
+    }
+    getWinner() {
+        return this.winner;
     }
     move(beginCell, endCell) {
         let { x: or, y: oc } = beginCell;
@@ -72,6 +77,7 @@ export default class Checkers {
             this.board[dr][dc] = new CellState(State.PLAYER2, Piece.KING);
         }
         this.turn = this.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
+        this.winner = this.endOfGame();
     }
     getState({ x, y }) {
         return this.board[x][y].state;
@@ -226,5 +232,24 @@ export default class Checkers {
             }
         }
         return moves;
+    }
+    endOfGame() {
+        let numP1 = this.countPieces(Piece.PLAYER1);
+        let numP2 = this.countPieces(Piece.PLAYER2);
+        if (numP1 === 0 && numP2 === 0) {
+            return Winner.DRAW;
+        } else if (numP1 === 0) {
+            return Winner.PLAYER2;
+        } else if (numP2 === 0) {
+            return Winner.PLAYER1;
+        }
+        let moves = this.getMandatoryCaptureMoves();
+        if (moves.length === 0) {
+            return this.turn === Player.PLAYER1 ? Winner.PLAYER2 : Winner.PLAYER1;
+        }
+        return Winner.NONE;
+    }
+    countPieces(player) {
+        return this.board.flat().filter(a => a.piece === player).length;
     }
 }
