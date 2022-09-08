@@ -1,15 +1,14 @@
-import State from './State.js';
-import Checkers from './Checkers.js';
 import Cell from './Cell.js';
-import Player from './Player.js';
 import BrazilianCheckers from './games/BrazilianCheckers.js';
-import EnglishCheckers from './games/EnglishCheckers.js';
 import CanadianCheckers from './games/CanadianCheckers.js';
+import EnglishCheckers from './games/EnglishCheckers.js';
 import InternationalCheckers from './games/InternationalCheckers.js';
+import Player from './Player.js';
+import State from './State.js';
 
 class GUI {
     constructor() {
-        this.game = new Checkers();
+        this.game = null;
         this.origin = null;
         this.RULES = [BrazilianCheckers, CanadianCheckers, EnglishCheckers, InternationalCheckers];
     }
@@ -168,7 +167,7 @@ class GUI {
         select.onchange = this.init.bind(this);
         for (let g of this.RULES) {
             let o = document.createElement("option");
-            o.textContent = g.name;
+            o.textContent = new g();
             select.appendChild(o);
         }
         this.init();
