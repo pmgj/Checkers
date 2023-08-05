@@ -22,7 +22,7 @@ public class MenCaptureBackwards extends Moves {
 
     private List<List<Cell>> possibleMoves(Cell currentCell, List<Cell> visitedCells) {
         State adversaryPlayer = (checkers.getTurn() == Player.PLAYER1) ? State.PLAYER2 : State.PLAYER1;
-        int crow = currentCell.getX(), ccol = currentCell.getY();
+        int crow = currentCell.x(), ccol = currentCell.y();
         int[][] pos = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
         List<List<Cell>> coords = new ArrayList<>();
         for (int[] po : pos) {

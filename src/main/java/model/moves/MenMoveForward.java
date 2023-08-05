@@ -17,7 +17,7 @@ public class MenMoveForward extends Moves {
 
     @Override
     public List<List<Cell>> possibleMoves(Cell currentCell) {
-        int row = currentCell.getX(), col = currentCell.getY();
+        int row = currentCell.x(), col = currentCell.y();
         List<List<Cell>> moves = new ArrayList<>();
         List<Cell> diags = (checkers.getTurn() == Player.PLAYER1) ? Arrays.asList(new Cell[]{new Cell(row - 1, col - 1), new Cell(row - 1, col + 1)}) : Arrays.asList(new Cell[]{new Cell(row + 1, col - 1), new Cell(row + 1, col + 1)});
         diags.forEach(pos -> {

@@ -26,12 +26,12 @@ public class Endpoint {
     public void onOpen(Session session) throws IOException, EncodeException {
         if (s1 == null) {
             s1 = session;
-            s1.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, Player.PLAYER1));
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, null, Player.PLAYER1, null));
         } else if (s2 == null) {
             game = new BrazilianCheckers();
             s2 = session;
-            s2.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, Player.PLAYER2));
-            Message msg = new Message(ConnectionType.CREATE_BOARD, game);
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, null, Player.PLAYER2, null));
+            Message msg = new Message(ConnectionType.CREATE_BOARD, game, null, null);
             s1.getBasicRemote().sendObject(msg);
             s2.getBasicRemote().sendObject(msg);
         } else {
@@ -41,7 +41,7 @@ public class Endpoint {
 
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
-        Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
+        Cell beginCell = message.beginCell(), endCell = message.endCell();
         try {
             if (endCell == null) {
                 Cell bCell = null;
@@ -55,13 +55,13 @@ public class Endpoint {
                     pm = game.showPossibleMoves(bCell);
                 }
                 if (bCell != null) {
-                    session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));
+                    session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, null, null, pm));
                 }
                 return;
             }
             game.move(session == s1 ? Player.PLAYER1 : Player.PLAYER2, beginCell, endCell);
-            s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
-            s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, null, null));
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, null, null));
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
@@ -70,26 +70,25 @@ public class Endpoint {
     @OnClose
     public void onClose(Session session, CloseReason reason) throws IOException, EncodeException {
         switch (reason.getCloseCode().getCode()) {
-            case 1000:
-            case 4000:
+            case 1000, 4000 -> {
                 if (session == s1) {
                     s1 = null;
                 } else {
                     s2 = null;
                 }
-                break;
-            case 1001:
-            case 4001:
+            }
+            case 1001, 4001 -> {
                 if (session == s1) {
-                    s2.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, Player.PLAYER2));
+                    s2.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, null, Player.PLAYER2, null));
                     s1 = null;
                 } else {
-                    s1.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, Player.PLAYER1));
+                    s1.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, null, Player.PLAYER1, null));
                     s2 = null;
                 }
-                break;
-            default:
+            }
+            default -> {
                 System.out.println(String.format("Close code %d incorrect", reason.getCloseCode().getCode()));
+            }
         }
     }
 }

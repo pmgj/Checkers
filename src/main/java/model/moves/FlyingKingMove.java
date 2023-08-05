@@ -16,7 +16,7 @@ public class FlyingKingMove extends Moves {
 
     @Override
     public List<List<Cell>> possibleMoves(Cell currentCell) {
-        int crow = currentCell.getX(), ccol = currentCell.getY();
+        int crow = currentCell.x(), ccol = currentCell.y();
         int[][] pos = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
         List<List<Cell>> moves = new ArrayList<>();
         for (int[] po : pos) {

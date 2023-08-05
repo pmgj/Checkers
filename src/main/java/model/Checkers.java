@@ -38,12 +38,12 @@ public abstract class Checkers {
     }
 
     public State getState(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getState();
+        return this.board[cell.x()][cell.y()].state();
     }
 
     private long countPieces(State piece) {
         Stream<CellState> stream = Arrays.stream(board).flatMap(x -> Arrays.stream(x));
-        return stream.filter(c -> c.getState() == piece).count();
+        return stream.filter(c -> c.state() == piece).count();
     }
 
     private List<List<Cell>> getMandatoryCaptureMoves() {
@@ -64,7 +64,7 @@ public abstract class Checkers {
                             maxLength = temp.size();
                         }
                         if (temp.size() == maxLength) {
-                            if (Math.abs(temp.get(0).getX() - temp.get(1).getX()) >= 2) {
+                            if (Math.abs(temp.get(0).x() - temp.get(1).x()) >= 2) {
                                 capture = true;
                             }
                             moves.addAll(pm);
@@ -74,7 +74,7 @@ public abstract class Checkers {
             }
         }
         if (capture) {
-            List<List<Cell>> temp = moves.stream().filter(m -> Math.abs(m.get(0).getX() - m.get(1).getX()) >= 2)
+            List<List<Cell>> temp = moves.stream().filter(m -> Math.abs(m.get(0).x() - m.get(1).x()) >= 2)
                     .collect(Collectors.toList());
             if (temp != null) {
                 moves = temp;
@@ -85,14 +85,14 @@ public abstract class Checkers {
 
     public boolean onBoard(Cell cell) {
         BiFunction<Integer, Integer, Boolean> inLimit = (value, limit) -> value >= 0 && value < limit;
-        return (inLimit.apply(cell.getX(), board.length) && inLimit.apply(cell.getY(), board[0].length));
+        return (inLimit.apply(cell.x(), board.length) && inLimit.apply(cell.y(), board[0].length));
     }
 
     public void move(Player player, Cell beginCell, Cell endCell) throws Exception {
         if (this.winner != Winner.NONE) {
             throw new Exception("This game is already finished.");
         }
-        int or = beginCell.getX(), oc = beginCell.getY(), dr = endCell.getX(), dc = endCell.getY();
+        int or = beginCell.x(), oc = beginCell.y(), dr = endCell.x(), dc = endCell.y();
         /* É a sua vez de jogar? */
         if (player != turn) {
             throw new Exception("It's not your turn.");
@@ -124,11 +124,11 @@ public abstract class Checkers {
                 .orElse(new ArrayList<>());
         int a = or, b = oc;
         for (Cell e : this.positions) {
-            int x = e.getX(), y = e.getY();
+            int x = e.x(), y = e.y();
             board[x][y] = board[a][b];
             int rdiff = x > a ? 1 : -1, cdiff = y > b ? 1 : -1;
             for (int i = 0; i < Math.abs(x - a); i++) {
-                board[a + rdiff * i][b + cdiff * i] = new CellState(State.EMPTY);
+                board[a + rdiff * i][b + cdiff * i] = new CellState(State.EMPTY, null);
             }
             a = x;
             b = y;
@@ -168,23 +168,21 @@ public abstract class Checkers {
     }
 
     public List<List<Cell>> showPossibleMoves(Cell cell) {
-        int row = cell.getX(), col = cell.getY();
+        int row = cell.x(), col = cell.y();
         List<List<Cell>> moves = new ArrayList<>();
-        switch (board[row][col].getPiece()) {
-            case MEN:
+        switch (board[row][col].piece()) {
+            case MEN -> {
                 moves = this.menCapture.possibleMoves(cell);
                 if (moves.isEmpty()) {
                     moves = this.menMove.possibleMoves(cell);
                 }
-                break;
-            case KING:
+            }
+            case KING -> {
                 moves = this.kingCapture.possibleMoves(cell);
                 if (moves.isEmpty()) {
                     moves = this.kingMove.possibleMoves(cell);
                 }
-                break;
-            default:
-                break;
+            }
         }
         moves.forEach(x -> {
             x.add(cell);
@@ -201,15 +199,15 @@ public abstract class Checkers {
         for (CellState[] b : board) {
             for (CellState c : b) {
                 System.out.print("| ");
-                switch (c.getPiece()) {
-                    case MEN:
+                switch (c.piece()) {
+                    case MEN -> {
                         System.out.print("M");
-                        break;
-                    case KING:
+                    }
+                    case KING -> {
                         System.out.print("K");
-                        break;
+                    }
                 }
-                System.out.print(c.getState() == State.PLAYER1 ? "1" : "2");
+                System.out.print(c.state() == State.PLAYER1 ? "1" : "2");
                 System.out.print(" ");
             }
             System.out.println("|");

@@ -30,7 +30,7 @@ public class MenCaptureForward extends Moves {
             adversaryPlayer = State.PLAYER1;
             pos = new int[][]{{1, -1}, {1, 1}};
         }
-        int crow = currentCell.getX(), ccol = currentCell.getY();
+        int crow = currentCell.x(), ccol = currentCell.y();
         List<List<Cell>> coords = new ArrayList<>();
         for (int[] po : pos) {
             int diffRow = po[0], diffCol = po[1];
