@@ -6,11 +6,15 @@ caption {
 
 table {
     margin: 0 auto;
+    border-collapse: separate;
 }
 
 td {
-    width: 49px;
-    height: 49px;
+    --cell-size: 8vmin;
+    --min-size: 40px;
+    --max-size: 60px;
+    width: clamp(var(--min-size), var(--cell-size), var(--max-size));
+    height: clamp(var(--min-size), var(--cell-size), var(--max-size));
     border: 3px solid black;
     text-align: center;
 }
@@ -24,6 +28,7 @@ img {
     vertical-align: middle;
     position: relative;
     animation-fill-mode: backwards;
+    width: 90%;
 }
 
 p {
@@ -40,4 +45,8 @@ p {
 
 .endPath {
     border: 3px solid orange;
+}
+
+select {
+    max-width: 11em;
 }

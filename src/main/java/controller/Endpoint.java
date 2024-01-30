@@ -41,7 +41,7 @@ public class Endpoint {
 
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
-        Cell beginCell = message.beginCell(), endCell = message.endCell();
+        Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
         try {
             if (endCell == null) {
                 Cell bCell = null;
